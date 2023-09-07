@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}Register{% endblock title %}
+
+{% block content %}
+{% if error %}
+    <p>{{ error }}</p>
+{% endif %}
+<td>
+    <form method="post">
+        <input style="margin-bottom: 5px;" type="text" name="login" placeholder="login"> <br>
+        <input style="margin-bottom: 5px;" type="password" name="password1" placeholder="password"> <br>
+        <input style="margin-bottom: 5px;" type="password" name="password2" placeholder="repeat password"> <br>
+        <input style="margin-bottom: 10px;" type="submit" name="" value="Submit">
+    </form>
+<br>
+{% endblock content %}
