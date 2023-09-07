@@ -11,13 +11,6 @@ database = peewee_async.MySQLDatabase(CONFIG['mysql_base'], user=CONFIG['mysql_u
                                       charset=CONFIG['mysql_charset'], port=CONFIG['mysql_port'])
 objects = peewee_async.Manager(database)
 
-# FILE_STATUS = {
-#     'in_processing': 1,
-#     'done': 2,
-#     'done_with_errors': 3,
-#     'incorrect_data': 4,
-# }
-
 
 class BaseModel(peewee.Model):
     id = peewee.PrimaryKeyField()
