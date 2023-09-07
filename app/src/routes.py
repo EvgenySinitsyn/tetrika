@@ -1,11 +1,12 @@
 from aiohttp.web import RouteTableDef, HTTPFound, View
 import aiohttp_jinja2
 from utils import check_session, process_string
-from base import User, FILE_STATUS, objects, File
+from base import User, objects, File, Post
 import uuid
 import aiohttp
 from peewee import DoesNotExist
 import asyncio
+import json
 
 
 routes = RouteTableDef()
@@ -55,19 +56,24 @@ class FileView(View):
         user = await objects.get(User, sessions=self.request.cookies.get('session_id'))
         file = await File.add(user, filename)
         start = True
+        strings_quantity = 0
         while True:
             string = await field.readline()
             if not string:
                 break
+
             string = string.decode().strip()
             if start:
                 if not string == 'userId,title,body':
-                    file.status = FILE_STATUS['incorrect_data']
+                    file.status = 'incorrect_data'
                     await objects.update(file)
                     break
                 start = False
                 continue
+            strings_quantity += 1
             asyncio.create_task(process_string(string, file))
+        file.strings_quantity = strings_quantity
+        await objects.update(file)
         return {}
 
 
@@ -99,3 +105,37 @@ class LoginView(View):
         response = HTTPFound(self.request.app.router['file'].url_for())
         response.set_cookie('session_id', session)
         return response
+
+
+@routes.view('/files', name='files_status')
+class FilesStatusView(View):
+    @aiohttp_jinja2.template('files_status.html')
+    @check_session()
+    async def get(self):
+        user = await objects.get(User, sessions=self.request.cookies.get('session_id'))
+        files = await objects.execute(File.select().where(File.user == user))
+        return {'files': files}
+
+
+@routes.view('/strings', name='strings')
+class FileStringsStatusView(View):
+    @aiohttp_jinja2.template('strings.html')
+    @check_session()
+    async def get(self):
+        user = await objects.get(User, sessions=self.request.cookies.get('session_id'))
+        file_id = self.request.query.get('file')
+        strings = await objects.execute(Post.select().join(File).join(User).where(
+            Post.file == file_id, User.id == user).order_by(Post.id))
+        response_strings = []
+        for string in strings:
+            string_response_body = json.loads(string.response_text) if string.response_text else None
+            response_string = {'string': string.csv_string,
+                               'message': string.error}
+            if string_response_body and string.response_status == 201:
+                response_string['message'] = {
+                    'result': f'Статус: {string.response_status}, ответ: {string.response_text}',
+                    'userId': int(string_response_body['userId']),
+                    'postId': string_response_body['id']
+                }
+            response_strings.append(response_string)
+        return {'strings': response_strings}

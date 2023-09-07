@@ -11,24 +11,26 @@ database = peewee_async.MySQLDatabase(CONFIG['mysql_base'], user=CONFIG['mysql_u
                                       charset=CONFIG['mysql_charset'], port=CONFIG['mysql_port'])
 objects = peewee_async.Manager(database)
 
-FILE_STATUS = {
-    'in_queue': 0,
-    'in_processing': 1,
-    'done': 2,
-    'done_with_errors': 3,
-    'incorrect_data': 4,
-}
+# FILE_STATUS = {
+#     'in_processing': 1,
+#     'done': 2,
+#     'done_with_errors': 3,
+#     'incorrect_data': 4,
+# }
 
 
-class User(peewee.Model):
+class BaseModel(peewee.Model):
     id = peewee.PrimaryKeyField()
+
+    class Meta:
+        database = database
+
+
+class User(BaseModel):
     create_tm = peewee.DateTimeField()
     login = peewee.CharField(unique=True)
     password = peewee.CharField()
     sessions = peewee.TextField()
-
-    class Meta:
-        database = database
 
     @classmethod
     async def add(cls, login, password1, password2, session=None):
@@ -63,16 +65,14 @@ class User(peewee.Model):
         return user.sessions
 
 
-class File(peewee.Model):
-    id = peewee.PrimaryKeyField()
+class File(BaseModel):
     create_tm = peewee.DateTimeField()
     name = peewee.CharField()
     user = peewee.ForeignKeyField(User)
-    status = peewee.IntegerField()
+    status = peewee.CharField()
+    strings_quantity = peewee.IntegerField(default=0)
+    processed_posts_quantity = peewee.IntegerField(default=0)
     errors_quantity = peewee.IntegerField(default=0)
-
-    class Meta:
-        database = database
 
     @classmethod
     async def add(cls, user, file_name):
@@ -80,21 +80,17 @@ class File(peewee.Model):
                                     create_tm=datetime.now(),
                                     name=file_name,
                                     user=user,
-                                    status=FILE_STATUS['in_queue'])
+                                    status='in_processing')
         return file
 
 
-class Post(peewee.Model):
-    id = peewee.PrimaryKeyField()
+class Post(BaseModel):
     create_tm = peewee.DateTimeField()
     file = peewee.ForeignKeyField(File)
     csv_string = peewee.TextField()
     response_text = peewee.TextField(null=True)
     response_status = peewee.IntegerField(null=True)
     error = peewee.CharField(null=True)
-
-    class Meta:
-        database = database
 
     @classmethod
     async def add(cls, file, csv_string, response_text=None, response_status=None, error=None):

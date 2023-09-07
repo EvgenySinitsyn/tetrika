@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block title %}Files status{% endblock title %}
+
+{% block content %}
+
+{% for string in strings %}
+<p>{{ string.string }}</p>
+<p>{{ string.message }}</p>
+<br>
+{% endfor %}
+
+{% endblock content %}

@@ -6,10 +6,11 @@
 {% if error %}
 <p>{{ error }}</p>
 {% endif %}
-<td>
-    <form class="" method="post" enctype="multipart/form-data">
-        <input style="margin-bottom: 5px;" type="file" accept="text/csv" name="csvfile" value=""> <br>
-        <input style="margin-bottom: 10px;" type="submit" name="" value="Submit">
-    </form>
+<form class="" method="post" enctype="multipart/form-data">
+    <input style="margin-bottom: 5px;" type="file" accept="text/csv" name="csvfile" value=""> <br>
+    <input style="margin-bottom: 10px;" type="submit" name="" value="Submit">
+</form>
 <br>
+<p><a href="/files">Посмотреть статус обработки файлов</a></p>
+
 {% endblock content %}

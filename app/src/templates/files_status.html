@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}Files status{% endblock title %}
+
+{% block content %}
+
+{% for file in files %}
+<h4>Имя файла: <a href="/strings?file={{ file.id }}">{{ file.name }}</a></h4>
+<p>загружен: {{ file.create_tm }}</p>
+<p>статус: {{ file.status }}</p>
+<p>всего строк: {{ file.strings_quantity }}</p>
+<p>обработано: {{ file.processed_posts_quantity }}</p>
+<p>завершено с ошибкой: {{ file.errors_quantity }}</p>
+<br>
+{% endfor %}
+
+{% endblock content %}

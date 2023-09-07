@@ -6,11 +6,12 @@ from datetime import datetime
 import asyncio
 import aiohttp
 
+
 SEMAPHORE = asyncio.Semaphore(7)
 URL = 'https://jsonplaceholder.typicode.com/posts'
 
 
-async def send_post(user_id, title, body, post):
+async def send_post(user_id, title, body, post, file):
     await SEMAPHORE.acquire()
     start = datetime.now().timestamp()
     async with aiohttp.ClientSession() as session:
@@ -26,6 +27,12 @@ async def send_post(user_id, title, body, post):
     post.response_text = await response.text()
     post.response_status = response.status
     await objects.update(post)
+    if file.processed_posts_quantity == file.strings_quantity:
+        if file.errors_quantity:
+            file.status = 'done_with_errors'
+        else:
+            file.status = 'done'
+    await objects.update(file)
 
 
 async def set_post_error(error, post, file):
@@ -37,6 +44,7 @@ async def set_post_error(error, post, file):
 
 async def process_string(string, file):
     post = await Post.add(file, string)
+    file.processed_posts_quantity += 1
     try:
         user_id, title, body = string.split(',')
     except Exception as ex:
@@ -45,7 +53,7 @@ async def process_string(string, file):
     if not user_id.isdigit():
         await set_post_error('Неверный тип данных', post, file)
         return
-    asyncio.create_task(send_post(user_id, title, body, post))
+    asyncio.create_task(send_post(user_id, title, body, post, file))
 
 
 def check_session():
