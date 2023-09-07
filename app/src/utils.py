@@ -48,10 +48,10 @@ async def process_string(string, file):
     try:
         user_id, title, body = string.split(',')
     except Exception as ex:
-        await set_post_error('Некорректные данные', post, file)
+        await set_post_error('Incorrect data', post, file)
         return
     if not user_id.isdigit():
-        await set_post_error('Неверный тип данных', post, file)
+        await set_post_error('Wrong data type', post, file)
         return
     asyncio.create_task(send_post(user_id, title, body, post, file))
 
